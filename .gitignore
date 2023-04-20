@@ -1,0 +1,25 @@
+# .gitignore
+
+# IntelliJ IDEA files
+/.idea/
+*.iml
+*.iws
+
+# Gradle build files and directories
+/build/
+.gradle/
+
+# Gradle Wrapper files
+gradle/wrapper/gradle-wrapper.jar
+
+# Gradle properties file
+gradle.properties
+
+# Compiled class files
+*.class
+
+# Output directory
+/output/
+
+# Log files
+*.log
