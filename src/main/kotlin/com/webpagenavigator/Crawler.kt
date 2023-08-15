@@ -10,6 +10,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.Jsoup.parse
 
 class Crawler {
+
+
 	private val client = HttpClient(Java) {
 		developmentMode = true
 		install(UserAgent) {
@@ -22,8 +24,13 @@ class Crawler {
 		return if (response.status.value in 200..299) {
 			parse(response.bodyAsText()).apply { setBaseUri(url) }
 		} else {
-			Logger.warn("Failed to fetch document for URL: $url. Status code: ${response.status.value}")
+			Logger.warn("Failed to fetch document for URL: '$url'. Status code: '${response.status.value}'")
 			null
 		}
+	}
+
+	suspend fun getPageData(url: String): HttpResponse{
+		Logger.info("Downloading $url")
+		return client.get(url)
 	}
 }

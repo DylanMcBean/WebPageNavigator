@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import io.ktor.client.statement.*
 import java.io.File
 
 class LinkTracker(private val baseUrl: String) {
@@ -19,12 +19,24 @@ class LinkTracker(private val baseUrl: String) {
 		internalVisitedSites[baseUrl] = 0
 	}
 
-	fun addLink(link: String, sourcePage: String, clicks: Int): Int {
+	suspend fun addLink(link: String, sourcePage: String, clicks: Int, crawler: Crawler): Int {
 		return if (isInternal(link)) {
 			links.getOrPut(link) { mutableSetOf() }.add(sourcePage)
 			if (!internalVisitedSites.containsKey(link) || internalVisitedSites[link]!! > clicks) {
+				val pageData: HttpResponse = crawler.getPageData(link)
 				internalVisitedSites[link] = clicks
-				queue.add(link)
+				if (pageData.headers["content-type"]?.contains("text/html") == true) {
+					queue.add(link)
+				}
+				AppConfig.downloadTypes.forEach { type ->
+					if (pageData.headers["content-type"]?.contains(type) == true) {
+						val relativePath = link.replace(AppConfig.crawler.baseUrl, "")
+						val file = File(AppConfig.outputFolder + relativePath.substringBefore("?"))
+						file.parentFile.mkdirs()
+						file.writeBytes(pageData.readBytes())
+						Logger.application("Saved $link")
+					}
+				}
 			}
 			1
 		} else {
@@ -63,12 +75,15 @@ class LinkTracker(private val baseUrl: String) {
 
 	fun saveLinksToJson(filePath: String) {
 		val mapper = jacksonObjectMapper()
-		mapper.writerWithDefaultPrettyPrinter().writeValue(File(filePath), hashMapOf(
+		val file = File(filePath)
+		file.parentFile.mkdirs()
+		file.createNewFile()
+		file.writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(hashMapOf(
 			"baseUrl" to baseUrl,
 			"links" to links,
 			"internalVisitedSites" to internalVisitedSites,
 			"externalVisitedSites" to externalVisitedSites
-		))
+		)))
 	}
 
 	fun savePageLinks(folderPath: String) {

@@ -7,7 +7,8 @@ import java.io.File
 data class Config(
 	val database: DatabaseConfig,
 	val crawler: CrawlerConfig,
-	val outputFolder: String
+	val outputFolder: String,
+	val downloadTypes: List<String>
 )
 
 data class DatabaseConfig(
@@ -39,6 +40,7 @@ class AppConfig {
 		val crawler: CrawlerConfig get() = config!!.crawler
 		val database: DatabaseConfig get() = config!!.database
 		val outputFolder: String get() = config!!.outputFolder
+		val downloadTypes: List<String> get() = config!!.downloadTypes
 
 	}
 }
